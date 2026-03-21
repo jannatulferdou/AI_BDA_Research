@@ -204,9 +204,10 @@ print(emp_results)
 
 emp_results.to_csv("output/table4_fe_ai_employment.csv", index=False)
 
-
-# 7. TABLE 5: FE REGRESSION (GDP)
-
+# =========================
+# 7. TABLE 5: FE REGRESSION (PAPER-READY)
+#    DV = log_GDP
+# =========================
 df_gdp = df[[
     "Country",
     "Year",
@@ -219,8 +220,12 @@ df_gdp = df[[
     "RD_Pct_GDP"
 ]].dropna().copy()
 
+
 df_gdp = df_gdp[df_gdp["GDP_USD_Bn"] > 0].copy()
+
+
 df_gdp["log_GDP"] = np.log(df_gdp["GDP_USD_Bn"])
+
 
 model_gdp = smf.ols(
     """
@@ -237,6 +242,22 @@ model_gdp = smf.ols(
     data=df_gdp
 ).fit(cov_type="HC1")
 
+print("\nTable 5: FE Regression for Economic Performance")
+print(model_gdp.summary())
+
+
+
+def stars(p):
+    if p < 0.01:
+        return "***"
+    elif p < 0.05:
+        return "**"
+    elif p < 0.10:
+        return "*"
+    else:
+        return ""
+
+
 gdp_results = pd.DataFrame({
     "Variable": model_gdp.params.index,
     "Coefficient": model_gdp.params.values,
@@ -244,12 +265,14 @@ gdp_results = pd.DataFrame({
     "P_Value": model_gdp.pvalues.values
 })
 
+
 gdp_results["Variable"] = (
     gdp_results["Variable"]
     .str.replace("C(Year)[T.", "Year ", regex=False)
     .str.replace("C(Country)[T.", "", regex=False)
     .str.replace("]", "", regex=False)
 )
+
 
 gdp_results["Variable"] = gdp_results["Variable"].replace({
     "AI_Adoption_Rate_Pct": "AI Adoption",
@@ -260,13 +283,20 @@ gdp_results["Variable"] = gdp_results["Variable"].replace({
     "RD_Pct_GDP": "R&D (% GDP)"
 })
 
+
 gdp_results["Significance"] = gdp_results["P_Value"].apply(stars)
+
 
 gdp_results["Coefficient"] = gdp_results["Coefficient"].round(3)
 gdp_results["Std_Error"] = gdp_results["Std_Error"].round(3)
 gdp_results["P_Value"] = gdp_results["P_Value"].round(3)
 
+print("\nTable 5:")
+print(gdp_results)
+
+
 gdp_results.to_csv("output/table5_fe_economic_performance.csv", index=False)
+
 
 # =========================
 # 8. TABLE 6: RANDOM FOREST
