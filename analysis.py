@@ -126,10 +126,8 @@ print(corr)
 corr.to_csv("output/table3_correlation_matrix.csv", index=True)
 
 
-# =========================
-# 6. TABLE 4: FE REGRESSION
-#    DV = AI_Employment_Pct
-# =========================
+# 6. TABLE 4: FE REGRESSION 
+
 df_emp = df[[
     "Country",
     "Year",
@@ -157,8 +155,16 @@ model_emp = smf.ols(
     data=df_emp
 ).fit(cov_type="HC1")
 
-print("\nTable 4: FE Regression for AI Employment")
-print(model_emp.summary())
+
+def stars(p):
+    if p < 0.01:
+        return "***"
+    elif p < 0.05:
+        return "**"
+    elif p < 0.1:
+        return "*"
+    else:
+        return ""
 
 emp_results = pd.DataFrame({
     "Variable": model_emp.params.index,
@@ -167,13 +173,40 @@ emp_results = pd.DataFrame({
     "P_Value": model_emp.pvalues.values
 })
 
+
+emp_results["Variable"] = (
+    emp_results["Variable"]
+    .str.replace("C(Year)[T.", "Year ", regex=False)
+    .str.replace("C(Country)[T.", "", regex=False)
+    .str.replace("]", "", regex=False)
+)
+
+
+emp_results["Variable"] = emp_results["Variable"].replace({
+    "AI_Adoption_Rate_Pct": "AI Adoption",
+    "AI_Readiness_Score": "AI Readiness",
+    "AI_Market_Pct_GDP": "AI Market (% GDP)",
+    "AI_Inv_Pct_Total_Startup": "AI Investment Share",
+    "Internet_Penetration_Pct": "Internet Penetration",
+    "RD_Pct_GDP": "R&D (% GDP)"
+})
+
+
+emp_results["Significance"] = emp_results["P_Value"].apply(stars)
+
+
+emp_results["Coefficient"] = emp_results["Coefficient"].round(3)
+emp_results["Std_Error"] = emp_results["Std_Error"].round(3)
+emp_results["P_Value"] = emp_results["P_Value"].round(3)
+
+print("\nTable 4 :")
+print(emp_results)
+
 emp_results.to_csv("output/table4_fe_ai_employment.csv", index=False)
 
 
-# =========================
-# 7. TABLE 5: FE REGRESSION
-#    DV = log_GDP
-# =========================
+# 7. TABLE 5: FE REGRESSION (GDP)
+
 df_gdp = df[[
     "Country",
     "Year",
@@ -204,9 +237,6 @@ model_gdp = smf.ols(
     data=df_gdp
 ).fit(cov_type="HC1")
 
-print("\nTable 5: FE Regression for Economic Performance")
-print(model_gdp.summary())
-
 gdp_results = pd.DataFrame({
     "Variable": model_gdp.params.index,
     "Coefficient": model_gdp.params.values,
@@ -214,8 +244,29 @@ gdp_results = pd.DataFrame({
     "P_Value": model_gdp.pvalues.values
 })
 
-gdp_results.to_csv("output/table5_fe_economic_performance.csv", index=False)
+gdp_results["Variable"] = (
+    gdp_results["Variable"]
+    .str.replace("C(Year)[T.", "Year ", regex=False)
+    .str.replace("C(Country)[T.", "", regex=False)
+    .str.replace("]", "", regex=False)
+)
 
+gdp_results["Variable"] = gdp_results["Variable"].replace({
+    "AI_Adoption_Rate_Pct": "AI Adoption",
+    "AI_Readiness_Score": "AI Readiness",
+    "AI_Market_Pct_GDP": "AI Market (% GDP)",
+    "AI_Inv_Pct_Total_Startup": "AI Investment Share",
+    "Internet_Penetration_Pct": "Internet Penetration",
+    "RD_Pct_GDP": "R&D (% GDP)"
+})
+
+gdp_results["Significance"] = gdp_results["P_Value"].apply(stars)
+
+gdp_results["Coefficient"] = gdp_results["Coefficient"].round(3)
+gdp_results["Std_Error"] = gdp_results["Std_Error"].round(3)
+gdp_results["P_Value"] = gdp_results["P_Value"].round(3)
+
+gdp_results.to_csv("output/table5_fe_economic_performance.csv", index=False)
 
 # =========================
 # 8. TABLE 6: RANDOM FOREST
